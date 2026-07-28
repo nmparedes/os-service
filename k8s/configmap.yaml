@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: os-service-config
+  labels:
+    app.kubernetes.io/name: os-service
+    app.kubernetes.io/part-of: fiap-tech-challenge
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  SERVICE_NAME: "os-service"
+  SERVICE_VERSION: "0.1.0"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  JWT_ISSUER: "fiap-tech-challenge-auth-function"
+  JWT_AUDIENCE: "fiap-tech-challenge-api"
+  JWT_REQUIRED_CUSTOMER_STATUS: "ACTIVE"
+  DB_HOST: "replace-with-managed-mysql-endpoint"
+  DB_PORT: "3306"
+  DB_DATABASE: "os_service"
+  CUSTOMER_SERVICE_BASE_URL: "http://customer-service.tech-challenge-apps.svc.cluster.local:3000"
+  WORKSHOP_SERVICE_BASE_URL: "http://workshop-service.tech-challenge-apps.svc.cluster.local:3000"
+  DB_SSL: "true"
+  MESSAGING_ENABLED: "true"
+  RABBITMQ_MAX_RETRIES: "3"
+  CONSUMED_MESSAGE_LEASE_MS: "300000"
+  METRICS_ENABLED: "true"
