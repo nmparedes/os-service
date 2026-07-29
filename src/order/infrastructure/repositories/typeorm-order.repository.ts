@@ -72,12 +72,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
   }
 
   async findAll(filters: OrderListFilters): Promise<PaginatedResponse<Order>> {
-    const queryBuilder = this.repository
-      .createQueryBuilder("order")
-      .leftJoinAndSelect("order.service_items", "service_item")
-      .leftJoinAndSelect("order.part_items", "part_item")
-      .leftJoinAndSelect("order.history_entries", "history_entry")
-      .distinct(true);
+    const queryBuilder = this.repository.createQueryBuilder("order");
 
     if (filters.number) {
       queryBuilder.andWhere("order.number LIKE :number", {
