@@ -15,7 +15,7 @@ export class CustomerHttpClient implements CustomerClient {
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService.get<string>(
       "CUSTOMER_SERVICE_BASE_URL",
-      "http://customer-service:3000",
+      "http://customer-service.tech-challenge-apps.svc.cluster.local",
     );
   }
 

@@ -32,8 +32,6 @@ jobs:
       K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE }}
       OS_DB_HOST: ${{ vars.OS_DB_HOST }}
       OS_DB_SSL: ${{ vars.OS_DB_SSL }}
-      CUSTOMER_SERVICE_BASE_URL: ${{ vars.CUSTOMER_SERVICE_BASE_URL }}
-      WORKSHOP_SERVICE_BASE_URL: ${{ vars.WORKSHOP_SERVICE_BASE_URL }}
       KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
       OS_DB_USERNAME: ${{ secrets.OS_DB_USERNAME }}
       OS_DB_PASSWORD: ${{ secrets.OS_DB_PASSWORD }}
@@ -53,8 +51,6 @@ jobs:
           test -n "${KUBECONFIG_B64}" || { echo "KUBECONFIG_B64 is required."; exit 1; }
           test -n "${OS_DB_HOST}" || { echo "OS_DB_HOST is required."; exit 1; }
           test -n "${OS_DB_SSL}" || { echo "OS_DB_SSL is required."; exit 1; }
-          test -n "${CUSTOMER_SERVICE_BASE_URL}" || { echo "CUSTOMER_SERVICE_BASE_URL is required."; exit 1; }
-          test -n "${WORKSHOP_SERVICE_BASE_URL}" || { echo "WORKSHOP_SERVICE_BASE_URL is required."; exit 1; }
           test -n "${OS_DB_USERNAME}" || { echo "OS_DB_USERNAME is required."; exit 1; }
           test -n "${OS_DB_PASSWORD}" || { echo "OS_DB_PASSWORD is required."; exit 1; }
           test -n "${JWT_SECRET}" || { echo "JWT_SECRET is required."; exit 1; }

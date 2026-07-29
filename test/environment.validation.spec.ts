@@ -18,10 +18,10 @@ describe("validateEnvironment", () => {
     expect(config.DB_USERNAME).toBe("os_service");
     expect(config.DB_DATABASE).toBe("os_service");
     expect(config.CUSTOMER_SERVICE_BASE_URL).toBe(
-      "http://customer-service:3000",
+      "http://customer-service.tech-challenge-apps.svc.cluster.local",
     );
     expect(config.WORKSHOP_SERVICE_BASE_URL).toBe(
-      "http://workshop-service:3000",
+      "http://workshop-service.tech-challenge-apps.svc.cluster.local",
     );
     expect(config.DB_SSL).toBe(false);
     expect(config.METRICS_ENABLED).toBe(true);

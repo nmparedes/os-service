@@ -18,8 +18,8 @@ data:
   DB_HOST: "${OS_DB_HOST}"
   DB_PORT: "3306"
   DB_DATABASE: "os_service"
-  CUSTOMER_SERVICE_BASE_URL: "${CUSTOMER_SERVICE_BASE_URL}"
-  WORKSHOP_SERVICE_BASE_URL: "${WORKSHOP_SERVICE_BASE_URL}"
+  CUSTOMER_SERVICE_BASE_URL: "http://customer-service.tech-challenge-apps.svc.cluster.local"
+  WORKSHOP_SERVICE_BASE_URL: "http://workshop-service.tech-challenge-apps.svc.cluster.local"
   DB_SSL: !!str ${OS_DB_SSL}
   MESSAGING_ENABLED: "true"
   RABBITMQ_MAX_RETRIES: "3"
