@@ -15,7 +15,7 @@ export class WorkshopHttpClient implements WorkshopClient {
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService.get<string>(
       "WORKSHOP_SERVICE_BASE_URL",
-      "http://workshop-service:3000",
+      "http://workshop-service.tech-challenge-apps.svc.cluster.local",
     );
   }
 

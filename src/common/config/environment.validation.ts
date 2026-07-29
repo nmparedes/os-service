@@ -78,11 +78,13 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
-  CUSTOMER_SERVICE_BASE_URL = "http://customer-service:3000";
+  CUSTOMER_SERVICE_BASE_URL =
+    "http://customer-service.tech-challenge-apps.svc.cluster.local";
 
   @IsOptional()
   @IsString()
-  WORKSHOP_SERVICE_BASE_URL = "http://workshop-service:3000";
+  WORKSHOP_SERVICE_BASE_URL =
+    "http://workshop-service.tech-challenge-apps.svc.cluster.local";
 
   @Transform(({ value }) => value === "true" || value === true)
   @IsBoolean()
