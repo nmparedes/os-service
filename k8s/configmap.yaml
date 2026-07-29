@@ -10,7 +10,6 @@ data:
   PORT: "3000"
   SERVICE_NAME: "os-service"
   SERVICE_VERSION: "0.1.0"
-  SWAGGER_BASE_PATH: "/orders"
   LOG_LEVEL: "info"
   LOG_FORMAT: "json"
   JWT_ISSUER: "fiap-tech-challenge-auth-function"

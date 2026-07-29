@@ -2,6 +2,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import type { OpenAPIObject } from "@nestjs/swagger";
 import "reflect-metadata";
 import { AppModule } from "./app.module";
 import { DomainExceptionFilter } from "./common/filters/domain-exception.filter";
@@ -14,9 +15,6 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   const serviceName = configService.get<string>("SERVICE_NAME", "os-service");
   const serviceVersion = configService.get<string>("SERVICE_VERSION", "0.1.0");
-  const swaggerBasePath = normalizeSwaggerBasePath(
-    configService.get<string>("SWAGGER_BASE_PATH"),
-  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -27,36 +25,60 @@ async function bootstrap(): Promise<void> {
   );
   app.useGlobalFilters(new DomainExceptionFilter(), new HttpExceptionFilter());
 
-  const swaggerConfigBuilder = new DocumentBuilder()
+  const swaggerConfig = new DocumentBuilder()
     .setTitle(serviceName)
     .setDescription("Phase 4 microservice API")
     .setVersion(serviceVersion)
-    .addBearerAuth();
+    .addBearerAuth()
+    .build();
 
-  if (swaggerBasePath) {
-    swaggerConfigBuilder.addServer(swaggerBasePath);
-  }
+  const swaggerDocument = rewriteExternalSwaggerPaths(
+    SwaggerModule.createDocument(app, swaggerConfig),
+  );
 
   SwaggerModule.setup(
     "docs",
     app,
-    SwaggerModule.createDocument(app, swaggerConfigBuilder.build()),
+    swaggerDocument,
   );
 
   await app.listen(configService.get<number>("PORT", 3000));
 }
 
-function normalizeSwaggerBasePath(basePath?: string): string | undefined {
-  const trimmedBasePath = basePath?.trim();
-  if (!trimmedBasePath) {
-    return undefined;
+function rewriteExternalSwaggerPaths(
+  document: OpenAPIObject,
+): OpenAPIObject {
+  const paths = { ...(document.paths ?? {}) };
+
+  // These endpoints are not exposed through the public gateway.
+  delete paths["/ready"];
+  delete paths["/metrics"];
+
+  rewritePath(paths, "/health", "/orders/health");
+  rewritePath(
+    paths,
+    "/public/orders/status-consultation",
+    "/orders/public/status",
+  );
+
+  return {
+    ...document,
+    paths,
+  };
+}
+
+function rewritePath(
+  paths: NonNullable<OpenAPIObject["paths"]>,
+  sourcePath: string,
+  targetPath: string,
+): void {
+  const pathItem = paths[sourcePath];
+  if (!pathItem) {
+    return;
   }
 
-  const prefixedBasePath = trimmedBasePath.startsWith("/")
-    ? trimmedBasePath
-    : `/${trimmedBasePath}`;
-
-  return prefixedBasePath.replace(/\/+$/, "") || undefined;
+  paths[targetPath] = pathItem;
+  delete paths[sourcePath];
 }
 
 void bootstrap();
