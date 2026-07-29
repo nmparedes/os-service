@@ -14,22 +14,30 @@ jobs:
         github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.event == 'push' &&
         github.event.workflow_run.head_repository.full_name == github.repository &&
-        (
-          github.event.workflow_run.head_branch == 'main' ||
-          github.event.workflow_run.head_branch == 'homologation'
-        )
+        github.event.workflow_run.head_branch == 'homologation'
       }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    environment: ${{ github.event.workflow_run.head_branch == 'main' && 'production' || 'homologation' }}
+    environment: homologation
     env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       SERVICE_NAME: os-service
       IMAGE_SHA: ghcr.io/${{ github.repository_owner }}/os-service:${{ github.event.workflow_run.head_sha }}
-      IMAGE_CHANNEL: ghcr.io/${{ github.repository_owner }}/os-service:${{ github.event.workflow_run.head_branch == 'main' && 'production' || 'homologation' }}
+      IMAGE_CHANNEL: ghcr.io/${{ github.repository_owner }}/os-service:homologation
       K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE }}
+      OS_DB_HOST: ${{ vars.OS_DB_HOST }}
+      OS_DB_SSL: ${{ vars.OS_DB_SSL }}
+      CUSTOMER_SERVICE_BASE_URL: ${{ vars.CUSTOMER_SERVICE_BASE_URL }}
+      WORKSHOP_SERVICE_BASE_URL: ${{ vars.WORKSHOP_SERVICE_BASE_URL }}
       KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
+      OS_DB_USERNAME: ${{ secrets.OS_DB_USERNAME }}
+      OS_DB_PASSWORD: ${{ secrets.OS_DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,8 +46,26 @@ jobs:
 
       - name: Require deployment configuration
         run: |
+          test -n "${AWS_REGION}" || { echo "AWS_REGION is required."; exit 1; }
+          test -n "${AWS_ACCESS_KEY_ID}" || { echo "AWS_ACCESS_KEY_ID is required."; exit 1; }
+          test -n "${AWS_SECRET_ACCESS_KEY}" || { echo "AWS_SECRET_ACCESS_KEY is required."; exit 1; }
           test -n "${K8S_NAMESPACE}" || { echo "K8S_NAMESPACE is required."; exit 1; }
           test -n "${KUBECONFIG_B64}" || { echo "KUBECONFIG_B64 is required."; exit 1; }
+          test -n "${OS_DB_HOST}" || { echo "OS_DB_HOST is required."; exit 1; }
+          test -n "${OS_DB_SSL}" || { echo "OS_DB_SSL is required."; exit 1; }
+          test -n "${CUSTOMER_SERVICE_BASE_URL}" || { echo "CUSTOMER_SERVICE_BASE_URL is required."; exit 1; }
+          test -n "${WORKSHOP_SERVICE_BASE_URL}" || { echo "WORKSHOP_SERVICE_BASE_URL is required."; exit 1; }
+          test -n "${OS_DB_USERNAME}" || { echo "OS_DB_USERNAME is required."; exit 1; }
+          test -n "${OS_DB_PASSWORD}" || { echo "OS_DB_PASSWORD is required."; exit 1; }
+          test -n "${JWT_SECRET}" || { echo "JWT_SECRET is required."; exit 1; }
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -59,12 +85,16 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p "${HOME}/.kube"
-          printf '%s' "${KUBECONFIG_B64}" | base64 --decode > "${HOME}/.kube/config"
+          printf '%s' "${KUBECONFIG_B64}" \
+            | tr -d '\r\n\t ' \
+            | base64 --decode > "${HOME}/.kube/config"
           chmod 600 "${HOME}/.kube/config"
 
       - name: Apply service manifests
         run: |
           kubectl kustomize k8s \
+            | python3 -c 'import os,sys; sys.stdout.write(os.path.expandvars(sys.stdin.read()))' \
+            | sed -E 's/^([[:space:]]*DB_SSL:[[:space:]]*)(true|false)$/\1"\2"/' \
             | sed "s|ghcr.io/replace-me/os-service:latest|${IMAGE_SHA}|g" \
             | kubectl apply -n "${K8S_NAMESPACE}" -f -
 

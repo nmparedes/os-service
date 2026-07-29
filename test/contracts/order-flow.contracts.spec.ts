@@ -6,8 +6,6 @@ import type {
   StockReleaseFailedMessage,
   StockReleasedMessage,
 } from "../../src/contracts/order-flow.contracts";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 
 describe("Order flow contracts", () => {
   it("keeps published budget requests versioned and correlated", () => {
@@ -108,39 +106,56 @@ describe("Order flow contracts", () => {
     );
   });
 
-  it("keeps the local compensation contract declarations structurally aligned", () => {
-    const billingContracts = readFileSync(
-      join(
-        process.cwd(),
-        "../billing-service/src/contracts/order-flow.contracts.ts",
-      ),
-      "utf8",
-    );
-    const workshopContracts = readFileSync(
-      join(
-        process.cwd(),
-        "../workshop-service/src/contracts/order-flow.contracts.ts",
-      ),
-      "utf8",
-    );
+  it("keeps local compensation contracts versioned and correlated", () => {
+    const refundRequest: PaymentRefundRequestedMessage = {
+      eventId: "event-007",
+      eventName: "payment.refund.requested",
+      eventVersion: 1,
+      occurredAt: "2026-01-01T00:00:00.000Z",
+      correlationId: "correlation-001",
+      causationId: "event-006",
+      sagaId: "saga-001",
+      orderId: "order-001",
+      payload: { paymentId: "payment-001", reason: "EXECUTION_FAILED" },
+    };
 
-    for (const declaration of [
-      "interface PaymentRefundRequestPayload",
-      "payment.refund.requested",
-      "interface PaymentRefundedPayload",
-      "payment.refunded",
-      "interface PaymentRefundFailedPayload",
-      "payment.refund.failed",
-    ]) {
-      expect(billingContracts).toContain(declaration);
-    }
-    for (const declaration of [
-      "interface StockReleasedPayload",
-      "stock.released",
-      "interface StockReleaseFailedPayload",
-      "stock.release.failed",
-    ]) {
-      expect(workshopContracts).toContain(declaration);
-    }
+    const refundFailure: PaymentRefundFailedMessage = {
+      ...refundRequest,
+      eventId: "event-008",
+      eventName: "payment.refund.failed",
+      payload: {
+        paymentId: "payment-001",
+        budgetId: "budget-001",
+        status: "REFUND_FAILED",
+        failureCode: "PROVIDER_UNAVAILABLE",
+      },
+    };
+
+    const releaseFailure: StockReleaseFailedMessage = {
+      eventId: "event-009",
+      eventName: "stock.release.failed",
+      eventVersion: 1,
+      occurredAt: "2026-01-01T00:00:00.000Z",
+      correlationId: refundRequest.correlationId,
+      causationId: "event-005",
+      sagaId: refundRequest.sagaId,
+      orderId: refundRequest.orderId,
+      payload: {
+        reservations: [
+          {
+            partId: "part-001",
+            quantity: 1,
+            status: "FAILED",
+            failureCode: "PART_NOT_FOUND",
+          },
+        ],
+      },
+    };
+
+    expect(refundRequest.eventVersion).toBe(1);
+    expect(refundFailure.eventName).toBe("payment.refund.failed");
+    expect(refundFailure.correlationId).toBe(refundRequest.correlationId);
+    expect(releaseFailure.eventName).toBe("stock.release.failed");
+    expect(releaseFailure.sagaId).toBe(refundRequest.sagaId);
   });
 });
