@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { PaginatedResponse } from "../../../common/interfaces/paginated-response.interface";
 import { Order } from "../../domain/entities/order.entity";
+import { OrderStatus } from "../../domain/enums/order-status.enum";
 import { OrderHistoryEntry } from "../../domain/repositories/order-history-entry.interface";
 import { OrderListFilters } from "../../domain/repositories/order-list-filters.interface";
 import { OrderRepository } from "../../domain/repositories/order.repository.interface";
@@ -27,7 +28,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
     if (existingEntity?.history_entries?.length) {
       const sortedHistoryEntries = [...existingEntity.history_entries].sort(
-        (left, right) => left.created_at.getTime() - right.created_at.getTime(),
+        compareHistoryEntries,
       );
       const latestHistoryEntry =
         sortedHistoryEntries[sortedHistoryEntries.length - 1];
@@ -192,9 +193,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
     }
 
     return [...(ormEntity.history_entries ?? [])]
-      .sort(
-        (left, right) => left.created_at.getTime() - right.created_at.getTime(),
-      )
+      .sort(compareHistoryEntries)
       .map((entry) => ({
         id: entry.id,
         orderId: entry.order_id,
@@ -223,4 +222,35 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
     return Number.parseInt(sameDayOrder.number.slice(-4), 10) + 1;
   }
+}
+
+const orderStatusSortOrder: Record<OrderStatus, number> = {
+  [OrderStatus.RECEIVED]: 1,
+  [OrderStatus.IN_DIAGNOSIS]: 2,
+  [OrderStatus.WAITING_BUDGET_APPROVAL]: 3,
+  [OrderStatus.BUDGET_APPROVED]: 4,
+  [OrderStatus.BUDGET_REJECTED]: 5,
+  [OrderStatus.IN_EXECUTION]: 6,
+  [OrderStatus.FINISHED]: 7,
+  [OrderStatus.DELIVERED]: 8,
+  [OrderStatus.CANCELLED]: 9,
+};
+
+function compareHistoryEntries(
+  left: { created_at: Date; status: OrderStatus; id: string },
+  right: { created_at: Date; status: OrderStatus; id: string },
+): number {
+  const createdAtDifference =
+    left.created_at.getTime() - right.created_at.getTime();
+  if (createdAtDifference !== 0) {
+    return createdAtDifference;
+  }
+
+  const statusDifference =
+    orderStatusSortOrder[left.status] - orderStatusSortOrder[right.status];
+  if (statusDifference !== 0) {
+    return statusDifference;
+  }
+
+  return left.id.localeCompare(right.id);
 }
