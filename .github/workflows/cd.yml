@@ -94,6 +94,7 @@ jobs:
         run: |
           kubectl kustomize k8s \
             | python3 -c 'import os,sys; sys.stdout.write(os.path.expandvars(sys.stdin.read()))' \
+            | python3 -c 'import re,sys; sys.stdout.write(re.sub(r"(^\\s*DB_SSL:\\s*)(true|false)(\\s*$)", r"\\1\"\\2\"\\3", sys.stdin.read(), flags=re.MULTILINE))' \
             | sed "s|ghcr.io/replace-me/os-service:latest|${IMAGE_SHA}|g" \
             | kubectl apply -n "${K8S_NAMESPACE}" -f -
 
