@@ -89,20 +89,20 @@ export class ListOrdersQueryDto {
   @Min(0)
   maxTotalAmount?: number;
 
-  @ApiPropertyOptional({ default: 1 })
+  @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page = 1;
+  page?: number;
 
-  @ApiPropertyOptional({ default: 10 })
+  @ApiPropertyOptional({ example: 10 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  limit = 10;
+  limit?: number;
 
   @ApiPropertyOptional({
     enum: [
@@ -113,7 +113,7 @@ export class ListOrdersQueryDto {
       "totalAmount",
       "createdAt",
     ],
-    default: "createdAt",
+    example: "createdAt",
   })
   @IsOptional()
   @IsIn([
@@ -130,10 +130,10 @@ export class ListOrdersQueryDto {
     | "receivedAt"
     | "finishedAt"
     | "totalAmount"
-    | "createdAt" = "createdAt";
+    | "createdAt";
 
-  @ApiPropertyOptional({ enum: ["ASC", "DESC"], default: "DESC" })
+  @ApiPropertyOptional({ enum: ["ASC", "DESC"], example: "DESC" })
   @IsOptional()
   @IsIn(["ASC", "DESC"])
-  order: "ASC" | "DESC" = "DESC";
+  order?: "ASC" | "DESC";
 }
