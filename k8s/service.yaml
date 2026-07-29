@@ -10,6 +10,6 @@ spec:
     app.kubernetes.io/name: os-service
   ports:
     - name: http
-      port: 3000
+      port: 80
       targetPort: http
   type: ClusterIP
