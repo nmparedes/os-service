@@ -35,7 +35,7 @@ export class ListOrdersQueryDto {
   @IsString()
   customerId?: string;
 
-  @ApiPropertyOptional({ example: "12345678900" })
+  @ApiPropertyOptional({ example: "11144477735" })
   @IsOptional()
   @IsString()
   customerDocument?: string;

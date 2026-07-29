@@ -11,7 +11,7 @@ export class PublicOrderStatusConsultationDto {
 
   @ApiProperty({
     description: "Customer CPF or CNPJ used to validate public access.",
-    example: "123.456.789-00",
+    example: "111.444.777-35",
   })
   @IsString()
   customerDocument: string;

@@ -4,7 +4,7 @@ import { IsDateString, IsOptional, IsString } from "class-validator";
 export class CreateOrderDto {
   @ApiProperty({
     description: "Customer CPF or CNPJ.",
-    example: "123.456.789-00",
+    example: "111.444.777-35",
   })
   @IsString()
   customerDocument: string;
