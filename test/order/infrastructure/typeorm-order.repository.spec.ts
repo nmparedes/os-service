@@ -183,6 +183,48 @@ describe("TypeOrmOrderRepository", () => {
     ]);
   });
 
+  it("keeps history progression stable when multiple entries share the same timestamp", async () => {
+    const order = createOrder();
+    const ormEntity = OrderMapper.toOrmEntity(order);
+    const sharedTimestamp = new Date("2026-01-18T15:00:00.000Z");
+    ormEntity.history_entries = [
+      {
+        ...ormEntity.history_entries[0],
+        id: "history-finished",
+        status: OrderStatus.FINISHED,
+        created_at: sharedTimestamp,
+      },
+      {
+        ...ormEntity.history_entries[0],
+        id: "history-executing",
+        status: OrderStatus.IN_EXECUTION,
+        created_at: sharedTimestamp,
+      },
+      {
+        ...ormEntity.history_entries[0],
+        id: "history-approved",
+        status: OrderStatus.BUDGET_APPROVED,
+        created_at: new Date("2026-01-18T14:59:59.000Z"),
+      },
+    ];
+    ormRepository.findOne.mockResolvedValue(ormEntity);
+
+    await expect(repository.findHistoryByOrderId("order-1")).resolves.toEqual([
+      expect.objectContaining({
+        id: "history-approved",
+        status: OrderStatus.BUDGET_APPROVED,
+      }),
+      expect.objectContaining({
+        id: "history-executing",
+        status: OrderStatus.IN_EXECUTION,
+      }),
+      expect.objectContaining({
+        id: "history-finished",
+        status: OrderStatus.FINISHED,
+      }),
+    ]);
+  });
+
   it("applies list filters and pagination through the local query builder", async () => {
     const order = createOrder();
     queryBuilder.getManyAndCount.mockResolvedValue([
